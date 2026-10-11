@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SoilSense – Know your soil's moisture and strength before you plant</title>
+<meta name="description" content="Track soil humidity and soil strength field by field, and plan what to cultivate each season.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f1f5f3; --surface:#ffffff; --ink:#1f2d27; --muted:#55645d; --line:#d3ddd8;
+  --leaf:#2e7d46; --leaf-ink:#ffffff; --water:#2377b5; --soil:#8a5a3b; --warn:#c8791d;
+  --head:"Bitter",Georgia,"Times New Roman",serif;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#111a16; --surface:#19251f; --ink:#e5eee9; --muted:#9fb0a7; --line:#2b3b33;
+    --leaf:#6cc383; --leaf-ink:#0f2016; --water:#5eb0ea; --soil:#c58d64; --warn:#e8a04d;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111a16; --surface:#19251f; --ink:#e5eee9; --muted:#9fb0a7; --line:#2b3b33;
+  --leaf:#6cc383; --leaf-ink:#0f2016; --water:#5eb0ea; --soil:#c58d64; --warn:#e8a04d;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1.0625rem;line-height:1.65}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--water);outline-offset:3px;border-radius:4px}
+.wrap{width:min(1100px,100% - 2.5rem);margin-inline:auto}
+h1,h2,h3{font-family:var(--head);line-height:1.12;margin:0}
+
+.nav{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 0}
+.logo{font-family:var(--head);font-weight:800;font-size:1.3rem;text-decoration:none}
+.nav ul{display:flex;gap:1.75rem;list-style:none;margin:0;padding:0}
+.nav ul a{text-decoration:none;color:var(--muted);font-weight:600}
+.nav ul a:hover{color:var(--ink)}
+
+.btn{display:inline-block;padding:.85rem 1.5rem;border-radius:999px;font:inherit;font-weight:700;text-decoration:none;border:2px solid var(--leaf);background:var(--leaf);color:var(--leaf-ink);cursor:pointer}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--ink);filter:none}
+
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;padding:3rem 0 4.5rem}
+h1{font-size:clamp(2.2rem,4.8vw,3.6rem);font-weight:800;letter-spacing:-.01em;margin-bottom:1.25rem}
+.lede{font-size:1.2rem;color:var(--muted);max-width:32rem;margin:0 0 2rem}
+.cta{display:flex;flex-wrap:wrap;gap:.75rem}
+.fine{color:var(--muted);font-size:.95rem;margin:1rem 0 0}
+
+/* field reading card */
+.reading{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:1.5rem}
+.reading header{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;margin-bottom:1.25rem}
+.reading header strong{font-family:var(--head);font-size:1.1rem}
+.reading header span{color:var(--muted);font-size:.9rem}
+.gauges{display:grid;grid-template-columns:auto 1fr;gap:1.5rem;align-items:center;margin-bottom:1.5rem}
+.ring{--p:32;width:8.5rem;aspect-ratio:1;border-radius:50%;background:conic-gradient(var(--water) calc(var(--p)*3.6deg),var(--line) 0);display:grid;place-items:center}
+.ring div{width:72%;aspect-ratio:1;border-radius:50%;background:var(--surface);display:grid;place-content:center;text-align:center}
+.ring b{font-family:var(--head);font-size:1.7rem;line-height:1}
+.ring small{color:var(--muted);font-size:.8rem}
+.stat h3{font-size:1rem;margin-bottom:.15rem}
+.stat p{margin:0;color:var(--muted);font-size:.95rem}
+.stat .tag{display:inline-block;margin-top:.5rem;padding:.15rem .7rem;border-radius:999px;background:var(--leaf);color:var(--leaf-ink);font-weight:700;font-size:.85rem}
+.depth h3{font-size:1rem;margin-bottom:.7rem}
+.row{display:grid;grid-template-columns:4.2rem 1fr 4rem;gap:.7rem;align-items:center;margin:.45rem 0;font-size:.9rem}
+.row span:last-child{text-align:right;color:var(--muted)}
+.bar{height:.85rem;background:var(--line);border-radius:999px;position:relative;overflow:hidden}
+.bar i{display:block;height:100%;width:calc(var(--v)/3*100%);background:var(--soil);border-radius:999px}
+.bar i.hi{background:var(--warn)}
+.scale{margin:.7rem 0 0;color:var(--muted);font-size:.85rem}
+
+section{padding:4.5rem 0;border-top:1px solid var(--line)}
+.title{font-size:clamp(1.7rem,3.4vw,2.4rem);font-weight:700;max-width:34rem;margin-bottom:.8rem}
+.sub{color:var(--muted);max-width:36rem;margin:0 0 2.5rem}
+
+.measure{display:grid;grid-template-columns:repeat(2,1fr);gap:0 4rem}
+.measure div{padding:1.3rem 0;border-top:1px solid var(--line)}
+.measure h3{font-size:1.2rem;margin-bottom:.35rem}
+.measure p{margin:0;color:var(--muted);max-width:28rem}
+
+/* CSS-only season planner */
+.planner input{position:absolute;opacity:0;pointer-events:none}
+.tabs{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.25rem}
+.tabs label{padding:.6rem 1.3rem;border:2px solid var(--line);border-radius:999px;font-weight:700;cursor:pointer;background:var(--surface)}
+.panel{display:none;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.75rem}
+.panel h3{font-size:1.5rem;margin-bottom:1.25rem}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem}
+.facts h4{margin:0 0 .35rem;font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.facts p{margin:0}
+.facts .big{font-family:var(--head);font-size:1.5rem;font-weight:700;color:var(--water);line-height:1.2}
+.facts .big.s{color:var(--soil)}
+#s1:checked ~ .panels #p1,#s2:checked ~ .panels #p2,#s3:checked ~ .panels #p3,#s4:checked ~ .panels #p4{display:block}
+#s1:checked ~ .tabs [for=s1],#s2:checked ~ .tabs [for=s2],#s3:checked ~ .tabs [for=s3],#s4:checked ~ .tabs [for=s4]{background:var(--leaf);border-color:var(--leaf);color:var(--leaf-ink)}
+#s1:focus-visible ~ .tabs [for=s1],#s2:focus-visible ~ .tabs [for=s2],#s3:focus-visible ~ .tabs [for=s3],#s4:focus-visible ~ .tabs [for=s4]{outline:3px solid var(--water);outline-offset:3px}
+.note{color:var(--muted);font-size:.92rem;margin:1rem 0 0}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;list-style:none;margin:0;padding:0;counter-reset:s}
+.steps li{counter-increment:s}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:2.3rem;height:2.3rem;border-radius:50%;background:var(--water);color:#fff;font-weight:800;margin-bottom:.9rem}
+.steps h3{font-size:1.2rem;margin-bottom:.35rem}
+.steps p{margin:0;color:var(--muted)}
+
+.join{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:clamp(1.75rem,4vw,3rem)}
+.join h2{font-size:clamp(1.8rem,3.8vw,2.7rem);margin-bottom:.6rem;max-width:32rem}
+.join p{color:var(--muted);margin:0 0 1.5rem;max-width:32rem}
+
+footer{border-top:1px solid var(--line);padding:2rem 0 2.5rem;color:var(--muted);font-size:.95rem}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:1rem}
+footer nav{display:flex;gap:1.25rem}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr;gap:2rem;padding:1.5rem 0 3rem}
+  .nav ul{display:none}
+  .measure{grid-template-columns:1fr}
+  .facts{grid-template-columns:1fr;gap:1.1rem}
+  .steps{grid-template-columns:1fr;gap:1.75rem}
+  section{padding:3.25rem 0}
+}
+@media (max-width:420px){.gauges{grid-template-columns:1fr;justify-items:start}}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <div class="nav">
+    <a class="logo" href="#">SoilSense</a>
+    <ul>
+      <li><a href="#measure">What we measure</a></li>
+      <li><a href="#seasons">Seasons</a></li>
+      <li><a href="#how">How it works</a></li>
+    </ul>
+    <a class="btn ghost" href="#start">Get started</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <h1>Plant when the soil is ready, not when the calendar says so.</h1>
+      <p class="lede">SoilSense tracks soil humidity and soil strength in each field, then tells you what to sow, when to till and when to hold off this season.</p>
+      <div class="cta">
+        <a class="btn" href="#start">Get started</a>
+        <a class="btn ghost" href="#seasons">Explore the seasons</a>
+      </div>
+      <p class="fine">Works with simple probes. No special equipment needed.</p>
+    </div>
+
+    <div class="reading" aria-label="Example field reading">
+      <header><strong>North field</strong><span>Example reading</span></header>
+      <div class="gauges">
+        <div class="ring" role="img" aria-label="Soil humidity 32 percent"><div><b>32%</b><small>soil humidity</small></div></div>
+        <div class="stat">
+          <h3>Ready to sow</h3>
+          <p>Moisture is in the good range for seed germination.</p>
+          <span class="tag">On target</span>
+        </div>
+      </div>
+      <div class="depth">
+        <h3>Soil strength by depth</h3>
+        <div class="row"><span>0–10 cm</span><div class="bar"><i style="--v:0.8"></i></div><span>0.8 MPa</span></div>
+        <div class="row"><span>10–20 cm</span><div class="bar"><i style="--v:1.3"></i></div><span>1.3 MPa</span></div>
+        <div class="row"><span>20–30 cm</span><div class="bar"><i class="hi" style="--v:2.2"></i></div><span>2.2 MPa</span></div>
+        <div class="row"><span>30–40 cm</span><div class="bar"><i class="hi" style="--v:2.6"></i></div><span>2.6 MPa</span></div>
+        <p class="scale">Roots slow down above about 2 MPa. Here a hard layer starts at 20 cm, so deep tillage is worth considering.</p>
+      </div>
+    </div>
+  </div>
+
+  <section id="measure">
+    <div class="wrap">
+      <h2 class="title">Two readings decide most of what happens underground.</h2>
+      <p class="sub">Water and resistance tell you whether seeds will sprout, roots will spread and machinery will damage the soil.</p>
+      <div class="measure">
+        <div><h3>Soil humidity</h3><p>How much water the soil holds right now. Too dry and seeds stall, too wet and roots lack air and fields can't be worked.</p></div>
+        <div><h3>Soil strength</h3><p>How hard the soil resists a probe at each depth. High readings point to compaction that limits roots and drainage.</p></div>
+        <div><h3>Field by field</h3><p>Every plot keeps its own history, so you see how a field changes after rain, tillage or a season of crops.</p></div>
+        <div><h3>Season planning</h3><p>Readings are matched to the crops and field work that suit the time of year, so decisions come with a reason.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="seasons">
+    <div class="wrap">
+      <h2 class="title">What to cultivate, season by season.</h2>
+      <p class="sub">Choose a season to see typical targets and field work. These are general ranges; your soil type and local climate will shift them.</p>
+      <div class="planner">
+        <input type="radio" name="s" id="s1" checked aria-label="Spring">
+        <input type="radio" name="s" id="s2" aria-label="Summer">
+        <input type="radio" name="s" id="s3" aria-label="Autumn">
+        <input type="radio" name="s" id="s4" aria-label="Winter">
+        <div class="tabs">
+          <label for="s1">Spring</label><label for="s2">Summer</label><label for="s3">Autumn</label><label for="s4">Winter</label>
+        </div>
+        <div class="panels">
+          <div class="panel" id="p1">
+            <h3>Spring: sow once the soil can be worked</h3>
+            <div class="facts">
+              <div><h4>Soil humidity</h4><p class="big">25–35%</p><p>Wait if the soil sticks to tools or forms a ball.</p></div>
+              <div><h4>Soil strength</h4><p class="big s">Under 1.5 MPa</p><p>Loosen any winter crust or compacted layer first.</p></div>
+              <div><h4>Good to plant</h4><p>Maize, peas, potatoes, spring onions, leafy greens.</p></div>
+            </div>
+          </div>
+          <div class="panel" id="p2">
+            <h3>Summer: protect moisture and avoid cracking</h3>
+            <div class="facts">
+              <div><h4>Soil humidity</h4><p class="big">20–30%</p><p>Irrigate early in the day and mulch to slow drying.</p></div>
+              <div><h4>Soil strength</h4><p class="big s">Rising fast</p><p>Dry soil hardens quickly, so avoid heavy traffic on it.</p></div>
+              <div><h4>Good to plant</h4><p>Tomatoes, peppers, sorghum, cotton, beans.</p></div>
+            </div>
+          </div>
+          <div class="panel" id="p3">
+            <h3>Autumn: the best window to repair the soil</h3>
+            <div class="facts">
+              <div><h4>Soil humidity</h4><p class="big">25–35%</p><p>Rain softens the soil, which is the time to break up hard layers.</p></div>
+              <div><h4>Soil strength</h4><p class="big s">Under 2 MPa</p><p>Subsoil only where readings show a hard layer.</p></div>
+              <div><h4>Good to plant</h4><p>Wheat, barley, garlic, canola, cover crops.</p></div>
+            </div>
+          </div>
+          <div class="panel" id="p4">
+            <h3>Winter: keep off wet ground and let it rest</h3>
+            <div class="facts">
+              <div><h4>Soil humidity</h4><p class="big">Above 35%</p><p>Waterlogged soil is easily compacted. Stay off it.</p></div>
+              <div><h4>Soil strength</h4><p class="big s">Check after thaw</p><p>Freeze and thaw can loosen the top layer naturally.</p></div>
+              <div><h4>Good to grow</h4><p>Cover crops, leeks, winter greens, or leave fallow.</p></div>
+            </div>
+          </div>
+        </div>
+        <p class="note">Illustrative ranges for general guidance. Confirm with local agronomy advice.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <h2 class="title">From probe to plan in three steps.</h2>
+      <ol class="steps">
+        <li><h3>Take readings</h3><p>Push a probe into the soil at a few spots per field and log humidity and strength by depth.</p></li>
+        <li><h3>See the status</h3><p>Each field shows whether it's ready, too wet, too dry or compacted, with the likely cause.</p></li>
+        <li><h3>Follow the plan</h3><p>Get the crops and field work that suit the season, and recheck after rain or tillage.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="start">
+    <div class="wrap">
+      <div class="join">
+        <h2>Start with one field and see what the soil is telling you.</h2>
+        <p>Set up a free field profile and log your first readings today.</p>
+        <a class="btn" href="#">Create a free field profile</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 SoilSense</span>
+    <nav aria-label="Footer"><a href="#">Guides</a><a href="#">Privacy</a><a href="#">Contact</a></nav>
+  </div>
+</footer>
+</body>
+</html>
